@@ -154,6 +154,7 @@ export default function Home() {
   const [kind,setKind] = useState("すべて");
   const [outside,setOutside] = useState(false);
   const [liked,setLiked] = useState<string[]>([]);
+  const [likedOnly,setLikedOnly] = useState(false);
   const [visibleCount,setVisibleCount] = useState(24);
   const [activeColumn,setActiveColumn] = useState<Column|null>(null);
   const columnTrack = useRef<HTMLDivElement>(null);
@@ -162,11 +163,13 @@ export default function Home() {
     resetResults();
     setSelected(current=>current.includes(name)?current.filter(x=>x!==name):[...current,name]);
   };
+  const schoolKey = (school: School) =>
+    `${school.prefecture}|${school.university}|${school.faculty}|${school.department}|${school.major??""}|${school.course??""}|${school.mode??"通学"}`;
   const results = useMemo(()=>DATA.filter(d=>{
     const allText = [d.prefecture,d.university,d.faculty,d.department,d.major??"",d.course??"",d.mode??"",...d.licenses].join("");
     const licenseMatch = !selected.length || (match==="all" ? selected.every(x=>d.licenses.includes(x)) : selected.some(x=>d.licenses.includes(x)));
-    return (!word || allText.includes(word)) && licenseMatch && (kind==="すべて" || d.kind===kind) && (!outside || !isTeacherTraining(d));
-  }),[word,selected,match,kind,outside]);
+    return (!word || allText.includes(word)) && licenseMatch && (kind==="すべて" || d.kind===kind) && (!outside || !isTeacherTraining(d)) && (!likedOnly || liked.includes(schoolKey(d)));
+  }),[word,selected,match,kind,outside,likedOnly,liked]);
   const visibleResults = results.slice(0,visibleCount);
   useEffect(()=>{
     const timer = window.setInterval(()=>{
@@ -184,7 +187,7 @@ export default function Home() {
     <header><a className="brand" href="#top"><small>Yoshiの</small>偏差値だけではわからない。</a><nav><a href="#finder">免許から探す</a><a href="#columns">進路コラム</a><a href="#tips">知っておきたいこと</a><a href="#series">シリーズ</a></nav></header>
     <section className="hero">
       <div><p className="label">シリーズ第2弾｜教員志望の大学選び</p><h1>教育学部じゃなくても、<br/><em>先生になれる。</em></h1><p className="lead">「行きたい大学」と「取りたい免許」を、同時に探そう。<br/>国公立・私立の教職課程を、学部・学科単位で見やすく。</p><a className="cta" href="#finder">取りたい免許から探す　↓</a></div>
-      <div className="visual"><div className="bubble">小学校＋中学数学、<br/>みたいに探せるよ。</div><div className="yoshiClip"><img className="yoshiHero" src={asset("/yoshi-teacher-transparent.png")} alt="恐竜の着ぐるみを着たYoshi"/></div><div className="mini one"><b>小学校</b><small>＋ 中学・数学</small></div><div className="mini two"><b>中学・英語</b><small>＋ 高校・英語</small></div></div>
+      <div className="visual"><div className="bubble">小学校＋中学数学、<br/>みたいに探せるよ。</div><div className="yoshiClip"><img className="yoshiHero" src={asset("/yoshi-teacher-corrected.png")} alt="恐竜の着ぐるみを着たYoshi"/></div><div className="mini one"><b>小学校</b><small>＋ 中学・数学</small></div><div className="mini two"><b>中学・英語</b><small>＋ 高校・英語</small></div></div>
     </section>
     <section className="tips" id="tips">
       <article><b>01</b><div><h3>校種をまたいで探せる</h3><p>小学校＋中学校など、取りたい免許を複数選択できます。</p></div></article>
@@ -204,8 +207,8 @@ export default function Home() {
         <label className="check"><input type="checkbox" checked={outside} onChange={e=>{resetResults();setOutside(e.target.checked)}}/> 教員養成系以外だけを見る</label>
       </div>
       {selected.length>0&&<div className="selectedSummary"><b>{match==="all"?"すべて取得できる候補":"いずれかを取得できる候補"}</b>{selected.map(x=><button key={x} onClick={()=>toggleLicense(x)}>{x} ×</button>)}</div>}
-      <div className="count"><b>{results.length}</b>件の学部・学科・専攻 <span>♡ 気になる {liked.length}件</span></div>
-      <div className="grid">{visibleResults.map(d=>{const key=`${d.prefecture}|${d.university}|${d.faculty}|${d.department}|${d.major??""}|${d.course??""}|${d.mode??"通学"}`;const active=liked.includes(key);return <article className="card" key={key}><div className="cardHead"><div><span className={`kind ${d.kind}`}>{d.kind}</span><span className="pref">{d.prefecture}</span>{d.mode&&<span className="mode">{d.mode}</span>}</div><button aria-label={`${d.university}を気になるに追加`} className={active?"active":""} onClick={()=>setLiked(x=>active?x.filter(y=>y!==key):[...x,key])}>{active?"♥":"♡"}</button></div><h3>{d.university}</h3><p>{d.faculty}<br/><strong>{d.department}</strong>{d.major&&<><br/><span className="major">{d.major}</span></>}{d.course&&<><br/><span className="course">{d.course}</span></>}</p>{!isTeacherTraining(d)&&<i className="outside">教員養成系以外で取得可</i>}<div className="licenses">{d.licenses.map(x=><span title={d.licenseLevels?.[x]?.map(level=>`${level}種`).join("・")} className={selected.includes(x)?"hit":""} key={x}>{x}{d.licenseLevels?.[x]?.length&&<small>{d.licenseLevels[x].join("・")}種</small>}</span>)}</div>{d.note&&<p className="cardNote">※ {d.note}</p>}</article>})}</div>
+      <div className="count"><b>{results.length}</b>件の学部・学科・専攻 <button className={likedOnly?"favoriteToggle active":"favoriteToggle"} disabled={!liked.length} onClick={()=>{resetResults();setLikedOnly(value=>!value)}}>♡ 気になる {liked.length}件{liked.length>0&&<small>{likedOnly?"すべて表示":"だけ表示"}</small>}</button></div>
+      <div className="grid">{visibleResults.map(d=>{const key=schoolKey(d);const active=liked.includes(key);return <article className="card" key={key}><div className="cardHead"><div><span className={`kind ${d.kind}`}>{d.kind}</span><span className="pref">{d.prefecture}</span>{d.mode&&<span className="mode">{d.mode}</span>}</div><button aria-label={`${d.university}を気になるに追加`} className={active?"active":""} onClick={()=>setLiked(x=>active?x.filter(y=>y!==key):[...x,key])}>{active?"♥":"♡"}</button></div><h3>{d.university}</h3><p>{d.faculty}<br/><strong>{d.department}</strong>{d.major&&<><br/><span className="major">{d.major}</span></>}{d.course&&<><br/><span className="course">{d.course}</span></>}</p>{!isTeacherTraining(d)&&<i className="outside">教員養成系以外で取得可</i>}<div className="licenses">{d.licenses.map(x=><span title={d.licenseLevels?.[x]?.map(level=>`${level}種`).join("・")} className={selected.includes(x)?"hit":""} key={x}>{x}{d.licenseLevels?.[x]?.length&&<small>{d.licenseLevels[x].join("・")}種</small>}</span>)}</div>{d.note&&<p className="cardNote">※ {d.note}</p>}</article>})}</div>
       {visibleCount<results.length&&<div className="loadMore"><button onClick={()=>setVisibleCount(count=>count+24)}>さらに24件を見る</button><small>{visibleResults.length} / {results.length}件を表示中</small></div>}
       {!results.length&&<p className="empty">選択した免許をすべて取得できる候補がありません。「いずれか」に切り替えるか、条件を減らしてみてください。</p>}
       <p className="dataNote">※ 文科省の課程認定一覧を検索用に再構成しています。「取得可能」は複数免許を4年間で同時取得できることを保証するものではありません。</p>
@@ -214,8 +217,9 @@ export default function Home() {
       <div className="columnsHead"><div><p className="label">CAREER COLUMNS</p><h2>先生になる前に、知っておきたいこと。</h2><p>大学選びから教育実習、採用試験まで。迷いやすいテーマを短く整理しました。</p></div><div className="columnArrows"><button onClick={()=>columnTrack.current?.scrollBy({left:-330,behavior:"smooth"})} aria-label="前の記事">←</button><button onClick={()=>columnTrack.current?.scrollBy({left:330,behavior:"smooth"})} aria-label="次の記事">→</button></div></div>
       <div className="columnTrack" ref={columnTrack}>
         {COLUMNS.map((column,index)=><article className="columnCard" key={column.id} onClick={()=>setActiveColumn(column)}>
-          <div className={`columnArt art${index%5}`}><span>{String(index+1).padStart(2,"0")}</span><img src={COLUMN_ARTS[index%COLUMN_ARTS.length]} alt="" aria-hidden="true"/><b>{column.category}</b></div>
-          <div className="columnBody"><small>{column.category}　・　読了{column.read}</small><h3>{column.title}</h3><p>{column.intro}</p><button>記事を読む　→</button></div>
+          <div className="columnCardMeta"><span>{column.category}</span><small>読了{column.read}</small></div>
+          <p className="columnNumber">{String(index+1).padStart(2,"0")}</p>
+          <h3>{column.title}</h3><p className="columnIntro">{column.intro}</p><button>記事を読む <span>→</span></button>
         </article>)}
       </div>
     </section>
