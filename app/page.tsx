@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { NATIONAL_PUBLIC_DATA } from "./national-public-data";
 import { PRIVATE_DATA } from "./private-data";
 import type { School } from "./types";
 
@@ -38,7 +39,7 @@ const FEATURED_DATA: School[] = [
 ];
 
 const DATA: School[] = [
-  ...FEATURED_DATA.filter((school) => school.kind !== "私立"),
+  ...NATIONAL_PUBLIC_DATA,
   ...PRIVATE_DATA,
 ];
 
@@ -51,6 +52,10 @@ const GROUPS: [string, string[]][] = [
 
 const PRIVATE_PROGRAMS = PRIVATE_DATA.length;
 const PRIVATE_UNIVERSITIES = new Set(PRIVATE_DATA.map((school) => school.university)).size;
+const NATIONAL_PROGRAMS = NATIONAL_PUBLIC_DATA.filter((school) => school.kind === "国立").length;
+const PUBLIC_PROGRAMS = NATIONAL_PUBLIC_DATA.filter((school) => school.kind === "公立").length;
+const NATIONAL_UNIVERSITIES = new Set(NATIONAL_PUBLIC_DATA.filter((school) => school.kind === "国立").map((school) => school.university)).size;
+const PUBLIC_UNIVERSITIES = new Set(NATIONAL_PUBLIC_DATA.filter((school) => school.kind === "公立").map((school) => school.university)).size;
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const asset = (path: string) => `${BASE_PATH}${path}`;
 const COLUMN_ARTS = [asset("/yoshi-point.png"), asset("/yoshi-read.png"), asset("/yoshi-laptop.png")];
@@ -151,7 +156,7 @@ export default function Home() {
       <article><b>03</b><div><h3>「取得可能」と「同時取得」は別</h3><p>履修条件や時間割は、大学の最新案内で最終確認しましょう。</p></div></article>
     </section>
     <section className="finder" id="finder">
-      <div className="sectionTitle"><p className="label">LICENSE FINDER</p><h2>欲しい免許を、いくつでも。</h2><p>私立は文科省一覧の通学・通信課程を収録。{PRIVATE_UNIVERSITIES}大学・短大、{PRIVATE_PROGRAMS.toLocaleString()}課程から探せます。</p></div>
+      <div className="sectionTitle"><p className="label">LICENSE FINDER</p><h2>欲しい免許を、いくつでも。</h2><p>文科省一覧の通学・通信課程を収録。国立{NATIONAL_UNIVERSITIES}校・{NATIONAL_PROGRAMS.toLocaleString()}課程、公立{PUBLIC_UNIVERSITIES}校・{PUBLIC_PROGRAMS.toLocaleString()}課程、私立{PRIVATE_UNIVERSITIES}校・{PRIVATE_PROGRAMS.toLocaleString()}課程から探せます。</p></div>
       <div className="filters">
         <label className="search">⌕<input value={word} onChange={e=>setWord(e.target.value)} placeholder="大学名・学部・都道府県で検索"/></label>
         <div className="selectRow single"><label><small>設置区分</small><select value={kind} onChange={e=>setKind(e.target.value)}><option>すべて</option><option>国立</option><option>公立</option><option>私立</option></select></label></div>
