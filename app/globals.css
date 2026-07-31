@@ -7,6 +7,7 @@
 .favoriteToggle small{margin-left:7px;color:var(--green);font-size:10px}
 .favoriteToggle.active{border-color:#e66f36;background:#fff0e7;color:#e66f36}
 .favoriteToggle:disabled{cursor:not-allowed;opacity:.55}
+.empty button{margin-top:12px;padding:11px 16px;border:1px solid var(--green);border-radius:999px;background:#fff;color:var(--green);font-size:12px;font-weight:900;cursor:pointer}
 .selectRow.single label{max-width:260px}
 .licensePicker{margin-top:14px;border:1px solid var(--line);border-radius:13px;padding:16px;background:#fbfdfb}
 .pickerHead{display:flex;align-items:center;justify-content:space-between;gap:10px}

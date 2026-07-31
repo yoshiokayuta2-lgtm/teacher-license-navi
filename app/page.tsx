@@ -165,6 +165,10 @@ export default function Home() {
   };
   const schoolKey = (school: School) =>
     `${school.prefecture}|${school.university}|${school.faculty}|${school.department}|${school.major??""}|${school.course??""}|${school.mode??"通学"}`;
+  const toggleLiked = (key: string, active: boolean) => {
+    if (active && liked.length === 1) setLikedOnly(false);
+    setLiked(current => active ? current.filter(item => item !== key) : [...current, key]);
+  };
   const results = useMemo(()=>DATA.filter(d=>{
     const allText = [d.prefecture,d.university,d.faculty,d.department,d.major??"",d.course??"",d.mode??"",...d.licenses].join("");
     const licenseMatch = !selected.length || (match==="all" ? selected.every(x=>d.licenses.includes(x)) : selected.some(x=>d.licenses.includes(x)));
@@ -208,9 +212,9 @@ export default function Home() {
       </div>
       {selected.length>0&&<div className="selectedSummary"><b>{match==="all"?"すべて取得できる候補":"いずれかを取得できる候補"}</b>{selected.map(x=><button key={x} onClick={()=>toggleLicense(x)}>{x} ×</button>)}</div>}
       <div className="count"><b>{results.length}</b>件の学部・学科・専攻 <button className={likedOnly?"favoriteToggle active":"favoriteToggle"} disabled={!liked.length} onClick={()=>{resetResults();setLikedOnly(value=>!value)}}>♡ 気になる {liked.length}件{liked.length>0&&<small>{likedOnly?"すべて表示":"だけ表示"}</small>}</button></div>
-      <div className="grid">{visibleResults.map(d=>{const key=schoolKey(d);const active=liked.includes(key);return <article className="card" key={key}><div className="cardHead"><div><span className={`kind ${d.kind}`}>{d.kind}</span><span className="pref">{d.prefecture}</span>{d.mode&&<span className="mode">{d.mode}</span>}</div><button aria-label={`${d.university}を気になるに追加`} className={active?"active":""} onClick={()=>setLiked(x=>active?x.filter(y=>y!==key):[...x,key])}>{active?"♥":"♡"}</button></div><h3>{d.university}</h3><p>{d.faculty}<br/><strong>{d.department}</strong>{d.major&&<><br/><span className="major">{d.major}</span></>}{d.course&&<><br/><span className="course">{d.course}</span></>}</p>{!isTeacherTraining(d)&&<i className="outside">教員養成系以外で取得可</i>}<div className="licenses">{d.licenses.map(x=><span title={d.licenseLevels?.[x]?.map(level=>`${level}種`).join("・")} className={selected.includes(x)?"hit":""} key={x}>{x}{d.licenseLevels?.[x]?.length&&<small>{d.licenseLevels[x].join("・")}種</small>}</span>)}</div>{d.note&&<p className="cardNote">※ {d.note}</p>}</article>})}</div>
+      <div className="grid">{visibleResults.map(d=>{const key=schoolKey(d);const active=liked.includes(key);return <article className="card" key={key}><div className="cardHead"><div><span className={`kind ${d.kind}`}>{d.kind}</span><span className="pref">{d.prefecture}</span>{d.mode&&<span className="mode">{d.mode}</span>}</div><button aria-label={`${d.university}を気になるに追加`} className={active?"active":""} onClick={()=>toggleLiked(key,active)}>{active?"♥":"♡"}</button></div><h3>{d.university}</h3><p>{d.faculty}<br/><strong>{d.department}</strong>{d.major&&<><br/><span className="major">{d.major}</span></>}{d.course&&<><br/><span className="course">{d.course}</span></>}</p>{!isTeacherTraining(d)&&<i className="outside">教員養成系以外で取得可</i>}<div className="licenses">{d.licenses.map(x=><span title={d.licenseLevels?.[x]?.map(level=>`${level}種`).join("・")} className={selected.includes(x)?"hit":""} key={x}>{x}{d.licenseLevels?.[x]?.length&&<small>{d.licenseLevels[x].join("・")}種</small>}</span>)}</div>{d.note&&<p className="cardNote">※ {d.note}</p>}</article>})}</div>
       {visibleCount<results.length&&<div className="loadMore"><button onClick={()=>setVisibleCount(count=>count+24)}>さらに24件を見る</button><small>{visibleResults.length} / {results.length}件を表示中</small></div>}
-      {!results.length&&<p className="empty">選択した免許をすべて取得できる候補がありません。「いずれか」に切り替えるか、条件を減らしてみてください。</p>}
+      {!results.length&&<div className="empty"><p>{likedOnly?"気になる候補がありません。":"選択した免許をすべて取得できる候補がありません。「いずれか」に切り替えるか、条件を減らしてみてください。"}</p>{likedOnly&&<button onClick={()=>setLikedOnly(false)}>すべての候補を表示</button>}</div>}
       <p className="dataNote">※ 文科省の課程認定一覧を検索用に再構成しています。「取得可能」は複数免許を4年間で同時取得できることを保証するものではありません。</p>
     </section>
     <section className="columns" id="columns">
