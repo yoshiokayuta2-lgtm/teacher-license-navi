@@ -143,7 +143,7 @@ export default function Home() {
     <header><a className="brand" href="#top"><small>Yoshiの</small>偏差値だけではわからない。</a><nav><a href="#finder">免許から探す</a><a href="#columns">進路コラム</a><a href="#tips">知っておきたいこと</a><a href="#series">シリーズ</a></nav></header>
     <section className="hero">
       <div><p className="label">シリーズ第2弾｜教員志望の大学選び</p><h1>教育学部じゃなくても、<br/><em>先生になれる。</em></h1><p className="lead">「行きたい大学」と「取りたい免許」を、同時に探そう。<br/>国公立・私立の教職課程を、学部・学科単位で見やすく。</p><a className="cta" href="#finder">取りたい免許から探す　↓</a></div>
-      <div className="visual"><div className="bubble">小学校＋中学数学、<br/>みたいに探せるよ。</div><img className="yoshiHero" src={asset("/yoshi-teacher.png")} alt="恐竜の着ぐるみを着たYoshi"/><div className="mini one"><b>小学校</b><small>＋ 中学・数学</small></div><div className="mini two"><b>中学・英語</b><small>＋ 高校・英語</small></div></div>
+      <div className="visual"><div className="bubble">小学校＋中学数学、<br/>みたいに探せるよ。</div><img className="yoshiHero" src={asset("/yoshi-teacher-transparent.png")} alt="恐竜の着ぐるみを着たYoshi"/><div className="mini one"><b>小学校</b><small>＋ 中学・数学</small></div><div className="mini two"><b>中学・英語</b><small>＋ 高校・英語</small></div></div>
     </section>
     <section className="tips" id="tips">
       <article><b>01</b><div><h3>校種をまたいで探せる</h3><p>小学校＋中学校など、取りたい免許を複数選択できます。</p></div></article>
