@@ -86,7 +86,9 @@ body:has(.articleOverlay){overflow:hidden}
   .articleSection h3{font-size:19px}
   .articleActions{display:grid}
 }
-.yoshiHero{position:absolute;left:24%;bottom:0;width:64%;height:88%;object-fit:cover;object-position:50% 16%;mix-blend-mode:multiply;filter:drop-shadow(0 12px 18px #17362f22)}
+.visual{overflow:hidden;isolation:isolate}
+.bubble,.mini{z-index:2}
+.yoshiHero{position:absolute;z-index:3;left:24%;bottom:-1px;width:64%;height:88%;object-fit:cover;object-position:50% 16%;mix-blend-mode:normal;filter:drop-shadow(0 12px 18px #17362f22)}
 .columnArt img{position:absolute;right:28px;bottom:-8px;width:136px;height:136px;object-fit:contain;object-position:center bottom;opacity:.96;z-index:1}
 .columnArt span,.columnArt b{z-index:2;position:relative}
 .columnArt b{position:absolute}
