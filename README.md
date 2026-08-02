@@ -1,17 +1,28 @@
-# 偏差値だけではわからない 教員免許ナビ
+#!/usr/bin/env bash
+set -euo pipefail
 
-大学・学部・学科から取得できる教員免許を検索できるWebサイトです。
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-## GitHub Pagesへの公開
+if [[ "${SITES_ENV_READY:-}" != "1" ]]; then
+  exec "${script_dir}/sites-env.sh" -- "$0" "$@"
+fi
 
-1. このフォルダの中身をGitHubリポジトリへアップロードします。
-2. リポジトリの「Settings」→「Pages」を開きます。
-3. 「Build and deployment」のSourceを「GitHub Actions」に設定します。
-4. `main`ブランチへ反映すると、自動でビルド・公開されます。
+command -v timeout >/dev/null || {
+  echo "build-verified.sh requires GNU timeout." >&2
+  exit 69
+}
 
-## ローカルで確認
+vinext="${SITES_PROJECT_ROOT}/node_modules/.bin/vinext"
+if [[ ! -x "${vinext}" ]]; then
+  echo "vinext is unavailable. Run npm run install:ci and wait for it to finish before building." >&2
+  exit 69
+fi
 
-```bash
-npm ci
-npm run dev
-```
+echo "Running bounded vinext build..."
+timeout \
+  --signal=TERM \
+  --kill-after="${SITES_BUILD_KILL_AFTER:-10s}" \
+  "${SITES_BUILD_TIMEOUT:-3m}" \
+  "${vinext}" build
+
+"${script_dir}/validate-artifact.sh"
