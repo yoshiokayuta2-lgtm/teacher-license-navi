@@ -113,6 +113,34 @@ body:has(.articleOverlay){overflow:hidden}
 .loadMore small,.dataNote{color:#74847f;font-size:11px}
 .dataNote{max-width:900px;margin:32px auto 0;line-height:1.8;text-align:center}
 
+/* Finder tools, details and comparison */
+.selectRow{grid-template-columns:repeat(3,1fr)}
+.resultBar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:17px}
+.resultBar .count{margin:0}
+.resultActions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.resultActions label{min-width:150px;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.resultActions label small{display:block;color:#758680;font-size:8px;font-weight:900}
+.resultActions select{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-size:11px;font-weight:800}
+.favoriteToggle{float:none;margin:0}
+.shareButton{padding:10px 13px;border:1px solid var(--green);border-radius:999px;background:#fff;color:var(--green);font-size:11px;font-weight:900;cursor:pointer}
+.shareNotice{width:max-content;margin:-8px 0 13px auto;padding:8px 12px;border-radius:8px;background:var(--ink);color:#fff;font-size:10px;font-weight:800}
+.card{display:flex;flex-direction:column}
+.cardActions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:auto;padding-top:18px}
+.cardActions button,.cardActions a{min-height:36px;padding:8px 9px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-size:10px;font-weight:900;text-align:center;cursor:pointer}
+.cardActions button.active{border-color:var(--orange);background:#fff0e7;color:#b85d2b}
+.cardActions button:disabled{cursor:not-allowed;opacity:.45}
+.cardActions a{grid-column:1/-1;color:var(--green);border-color:#9fc9bb}
+.compareDock{position:fixed;z-index:35;left:50%;bottom:18px;transform:translateX(-50%);width:min(620px,calc(100% - 30px));padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:15px;border:1px solid #50746a;border-radius:16px;background:#17362ff4;color:#fff;box-shadow:0 16px 45px #17362f55;backdrop-filter:blur(10px)}
+.compareDock>div{display:flex;align-items:center;gap:9px}.compareDock span{color:#b9cec7;font-size:9px}.compareDock button{padding:9px 12px;border:1px solid #ffffff55;border-radius:8px;background:transparent;color:#fff;font-size:10px;font-weight:900;cursor:pointer}.compareDock button.primary{background:#fff;color:var(--ink)}
+.schoolOverlay{position:fixed;inset:0;z-index:60;padding:28px 18px;display:grid;place-items:center;background:#17362fdd;backdrop-filter:blur(7px);overflow-y:auto}
+.schoolDetail,.comparePanel{position:relative;width:min(760px,100%);max-height:calc(100dvh - 56px);overflow:auto;padding:46px 48px 40px;border-radius:22px;background:#fffdf8;box-shadow:0 30px 90px #0006}
+.schoolClose{position:absolute;right:17px;top:15px;width:40px;height:40px;border:0;border-radius:50%;background:#edf2ee;color:var(--ink);font-size:24px;cursor:pointer}
+.detailMeta{margin:0 0 12px;color:#71817c;font-size:11px;font-weight:800}.schoolDetail>h2,.comparePanel>h2{margin:0;font-size:clamp(30px,5vw,44px);letter-spacing:-.04em}.schoolDetail>h3{margin:10px 0 3px;font-size:18px}.detailCourse{color:#657a73}
+.detailFacts{margin:26px 0 0;border-top:2px solid var(--ink)}.detailFacts>div{display:grid;grid-template-columns:125px 1fr;border-bottom:1px solid var(--line)}.detailFacts dt,.detailFacts dd{margin:0;padding:14px}.detailFacts dt{background:#f1f5f2;font-size:11px;font-weight:900}.detailFacts dd{font-size:12px;line-height:1.7}.detailFacts dd span{margin:0 6px 6px 0;padding:6px 8px;display:inline-flex;gap:5px;border-radius:6px;background:var(--mint);color:#225c4d;font-weight:800}.detailFacts dd small{padding-left:5px;border-left:1px solid #8eb8a9;font-size:8px}
+.detailNote,.detailCaution{padding:13px 15px;border-radius:10px;font-size:11px;line-height:1.75}.detailNote{background:#fff0df;color:#8b512e}.detailCaution{background:#f0f4f2;color:#536a62}.detailActions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:20px}.detailActions a,.detailActions button{padding:13px;border:1px solid var(--green);border-radius:9px;background:#fff;color:var(--green);font-size:11px;font-weight:900;text-align:center;cursor:pointer}.detailActions a{background:var(--green);color:#fff}
+.comparePanel{width:min(1080px,100%)}.compareGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:24px;border-top:2px solid var(--ink);border-left:1px solid var(--line)}.compareGrid>section{position:relative;padding:20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.compareGrid section>small{margin-left:7px;color:#758680}.compareGrid h3{margin:20px 0 7px;font-size:21px}.compareGrid section>p{min-height:62px;color:#60736c;font-size:12px;line-height:1.7}.compareGrid dl{margin:16px 0}.compareGrid dl>div{padding:10px 0;border-top:1px solid var(--line)}.compareGrid dt{color:#758680;font-size:9px;font-weight:900}.compareGrid dd{margin:4px 0 0;font-size:11px;line-height:1.65}.compareGrid section>a{color:var(--green);font-size:10px;font-weight:900}.removeCompare{position:absolute;right:12px;top:13px;border:0;background:transparent;color:#7b8b85;font-size:9px;cursor:pointer}.compareFooter{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.compareFooter button{padding:11px 14px;border:1px solid var(--green);border-radius:8px;background:#fff;color:var(--green);font-size:10px;font-weight:900;cursor:pointer}
+body:has(.schoolOverlay){overflow:hidden}
+
 /* Series navigation */
 .series{max-width:1180px;margin:0 auto 95px;padding:0 20px}
 .seriesHead{margin-bottom:26px}
@@ -141,6 +169,13 @@ body:has(.articleOverlay){overflow:hidden}
   .card>p{overflow-wrap:anywhere}
   .licenses span{font-size:10px}
   .dataNote{text-align:left}
+  .selectRow{grid-template-columns:1fr}
+  .resultBar{display:block}.resultActions{display:grid;grid-template-columns:1fr 1fr;justify-content:stretch}.resultActions .favoriteToggle{grid-column:1/-1}.resultActions label{min-width:0}.shareButton{border-radius:9px}.shareNotice{margin:0 0 13px}
+  .cardActions{grid-template-columns:1fr 1fr}
+  .compareDock{bottom:10px}
+  .schoolOverlay{padding:0;display:block}.schoolDetail,.comparePanel{width:100%;max-height:100dvh;min-height:100dvh;padding:58px 18px 35px;border-radius:0}
+  .detailFacts>div{grid-template-columns:92px 1fr}.detailFacts dt,.detailFacts dd{padding:11px 9px}.detailActions{grid-template-columns:1fr}
+  .compareGrid{grid-template-columns:1fr;gap:13px;border:0}.compareGrid>section{border:1px solid var(--line);border-top:4px solid var(--green);border-radius:13px}.compareGrid section>p{min-height:0}.compareFooter{display:grid;grid-template-columns:1fr 1fr}
   .series{margin-bottom:65px;padding:0 15px}
   .seriesCards{grid-template-columns:1fr}
   .seriesCard{min-height:185px;padding:22px;grid-template-columns:1fr}

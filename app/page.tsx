@@ -92,6 +92,21 @@ const PUBLIC_UNIVERSITIES = new Set(NATIONAL_PUBLIC_DATA.filter((school) => scho
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const asset = (path: string) => `${BASE_PATH}${path}`;
 const COLUMN_ARTS = [asset("/yoshi-point.png"), asset("/yoshi-read.png"), asset("/yoshi-laptop.png")];
+const DATA_REFERENCE_DATE = "令和7年4月1日";
+const SITE_CHECK_DATE = "2026年7月31日";
+
+const REGION_PREFECTURES: Record<string, string[]> = {
+  "北海道・東北": ["北海道","青森","岩手","宮城","秋田","山形","福島"],
+  "関東": ["茨城","栃木","群馬","埼玉","千葉","東京","神奈川"],
+  "甲信越・北陸": ["新潟","富山","石川","福井","山梨","長野"],
+  "東海": ["岐阜","静岡","愛知","三重"],
+  "関西": ["滋賀","京都","大阪","兵庫","奈良","和歌山"],
+  "中国・四国": ["鳥取","島根","岡山","広島","山口","徳島","香川","愛媛","高知"],
+  "九州・沖縄": ["福岡","佐賀","長崎","熊本","大分","宮崎","鹿児島","沖縄"],
+};
+
+const universityOfficialSearchUrl = (university: string) =>
+  `https://www.google.com/search?q=${encodeURIComponent(`"${university}" 公式サイト 教職課程`)}`;
 
 const isTeacherTraining = (school: School) =>
   school.faculty.includes("教育") ||
@@ -152,11 +167,18 @@ export default function Home() {
   const [selected,setSelected] = useState<string[]>([]);
   const [match,setMatch] = useState<"all"|"any">("all");
   const [kind,setKind] = useState("すべて");
+  const [region,setRegion] = useState("すべて");
+  const [prefecture,setPrefecture] = useState("すべて");
+  const [sort,setSort] = useState("大学名順");
   const [outside,setOutside] = useState(false);
   const [liked,setLiked] = useState<string[]>([]);
   const [likedOnly,setLikedOnly] = useState(false);
+  const [compareKeys,setCompareKeys] = useState<string[]>([]);
+  const [compareOpen,setCompareOpen] = useState(false);
   const [visibleCount,setVisibleCount] = useState(24);
+  const [activeSchool,setActiveSchool] = useState<School|null>(null);
   const [activeColumn,setActiveColumn] = useState<Column|null>(null);
+  const [shareNotice,setShareNotice] = useState("");
   const columnTrack = useRef<HTMLDivElement>(null);
   const resetResults = () => setVisibleCount(24);
   const toggleLicense = (name:string) => {
@@ -169,12 +191,65 @@ export default function Home() {
     if (active && liked.length === 1) setLikedOnly(false);
     setLiked(current => active ? current.filter(item => item !== key) : [...current, key]);
   };
-  const results = useMemo(()=>DATA.filter(d=>{
+  const toggleCompare = (key: string) => {
+    if(compareKeys.includes(key)&&compareKeys.length===1) setCompareOpen(false);
+    setCompareKeys(current => current.includes(key) ? current.filter(item=>item!==key) : current.length<3 ? [...current,key] : current);
+  };
+  const availablePrefectures = region==="すべて"
+    ? [...new Set(DATA.map(school=>school.prefecture))].sort()
+    : REGION_PREFECTURES[region] ?? [];
+  const filteredResults = useMemo(()=>DATA.filter(d=>{
     const allText = [d.prefecture,d.university,d.faculty,d.department,d.major??"",d.course??"",d.mode??"",...d.licenses].join("");
     const licenseMatch = !selected.length || (match==="all" ? selected.every(x=>d.licenses.includes(x)) : selected.some(x=>d.licenses.includes(x)));
-    return (!word || allText.includes(word)) && licenseMatch && (kind==="すべて" || d.kind===kind) && (!outside || !isTeacherTraining(d)) && (!likedOnly || liked.includes(schoolKey(d)));
-  }),[word,selected,match,kind,outside,likedOnly,liked]);
+    const regionMatch = region==="すべて" || REGION_PREFECTURES[region]?.includes(d.prefecture);
+    return (!word || allText.includes(word)) && licenseMatch && (kind==="すべて" || d.kind===kind) && regionMatch && (prefecture==="すべて" || d.prefecture===prefecture) && (!outside || !isTeacherTraining(d)) && (!likedOnly || liked.includes(schoolKey(d)));
+  }),[word,selected,match,kind,region,prefecture,outside,likedOnly,liked]);
+  const results = useMemo(()=>[...filteredResults].sort((a,b)=>{
+    if(sort==="都道府県順") return a.prefecture.localeCompare(b.prefecture,"ja") || a.university.localeCompare(b.university,"ja");
+    if(sort==="免許数が多い順") return b.licenses.length-a.licenses.length || a.university.localeCompare(b.university,"ja");
+    if(sort==="教員養成系を先に") return Number(isTeacherTraining(b))-Number(isTeacherTraining(a)) || a.university.localeCompare(b.university,"ja");
+    return a.university.localeCompare(b.university,"ja") || a.faculty.localeCompare(b.faculty,"ja");
+  }),[filteredResults,sort]);
   const visibleResults = results.slice(0,visibleCount);
+  const comparedSchools = compareKeys.map(key=>DATA.find(school=>schoolKey(school)===key)).filter((school): school is School=>Boolean(school));
+  const copyShareUrl = async () => {
+    const params = new URLSearchParams();
+    if(word) params.set("q",word);
+    if(kind!=="すべて") params.set("kind",kind);
+    if(region!=="すべて") params.set("region",region);
+    if(prefecture!=="すべて") params.set("pref",prefecture);
+    if(selected.length) params.set("licenses",selected.join("|"));
+    if(match!=="all") params.set("match",match);
+    if(outside) params.set("outside","1");
+    const url = `${window.location.origin}${window.location.pathname}${params.size?`?${params.toString()}`:""}#finder`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareNotice("検索条件のURLをコピーしました");
+    } catch {
+      window.prompt("このURLをコピーしてください",url);
+      setShareNotice("共有用URLを作成しました");
+    }
+    window.setTimeout(()=>setShareNotice(""),2200);
+  };
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(()=>{
+    try {
+      const saved = JSON.parse(window.localStorage.getItem("teacher-license-liked")??"[]");
+      if(Array.isArray(saved)) setLiked(saved.filter(item=>typeof item==="string"));
+      const params = new URLSearchParams(window.location.search);
+      if(params.get("q")) setWord(params.get("q")!);
+      if(params.get("kind")) setKind(params.get("kind")!);
+      if(params.get("region")) setRegion(params.get("region")!);
+      if(params.get("pref")) setPrefecture(params.get("pref")!);
+      if(params.get("licenses")) setSelected(params.get("licenses")!.split("|").filter(item=>allLicenses.includes(item)));
+      if(params.get("match")==="any") setMatch("any");
+      if(params.get("outside")==="1") setOutside(true);
+    } catch {}
+  },[]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+  useEffect(()=>{
+    window.localStorage.setItem("teacher-license-liked",JSON.stringify(liked));
+  },[liked]);
   useEffect(()=>{
     const timer = window.setInterval(()=>{
       const track = columnTrack.current;
@@ -202,7 +277,11 @@ export default function Home() {
       <div className="sectionTitle"><p className="label">LICENSE FINDER</p><h2>欲しい免許を、いくつでも。</h2><p>文科省一覧の通学・通信課程を収録。国立{NATIONAL_UNIVERSITIES}校・{NATIONAL_PROGRAMS.toLocaleString()}課程、公立{PUBLIC_UNIVERSITIES}校・{PUBLIC_PROGRAMS.toLocaleString()}課程、私立{PRIVATE_UNIVERSITIES}校・{PRIVATE_PROGRAMS.toLocaleString()}課程から探せます。</p></div>
       <div className="filters">
         <label className="search">⌕<input value={word} onChange={e=>{resetResults();setWord(e.target.value)}} placeholder="大学名・学部・都道府県で検索"/></label>
-        <div className="selectRow single"><label><small>設置区分</small><select value={kind} onChange={e=>{resetResults();setKind(e.target.value)}}><option>すべて</option><option>国立</option><option>公立</option><option>私立</option></select></label></div>
+        <div className="selectRow">
+          <label><small>設置区分</small><select value={kind} onChange={e=>{resetResults();setKind(e.target.value)}}><option>すべて</option><option>国立</option><option>公立</option><option>私立</option></select></label>
+          <label><small>地域</small><select value={region} onChange={e=>{resetResults();setRegion(e.target.value);setPrefecture("すべて")}}><option>すべて</option>{Object.keys(REGION_PREFECTURES).map(name=><option key={name}>{name}</option>)}</select></label>
+          <label><small>都道府県</small><select value={prefecture} onChange={e=>{resetResults();setPrefecture(e.target.value)}}><option>すべて</option>{availablePrefectures.map(name=><option key={name}>{name}</option>)}</select></label>
+        </div>
         <div className="licensePicker">
           <div className="pickerHead"><div><small>取得したい免許（複数選択可）</small><strong>{selected.length ? `${selected.length}種類を選択中` : "免許を選んでください"}</strong></div>{selected.length>0&&<button onClick={()=>{resetResults();setSelected([])}}>すべて解除</button>}</div>
           {GROUPS.map(([title,items])=><div className="licenseGroup" key={title}><p>{title}</p><div>{items.map(item=><button key={item} className={selected.includes(item)?"selected":""} onClick={()=>toggleLicense(item)}><span>{selected.includes(item)?"✓":"＋"}</span>{item.replace("中学 ","").replace("高校 ","")}</button>)}</div></div>)}
@@ -211,12 +290,33 @@ export default function Home() {
         <label className="check"><input type="checkbox" checked={outside} onChange={e=>{resetResults();setOutside(e.target.checked)}}/> 教員養成系以外だけを見る</label>
       </div>
       {selected.length>0&&<div className="selectedSummary"><b>{match==="all"?"すべて取得できる候補":"いずれかを取得できる候補"}</b>{selected.map(x=><button key={x} onClick={()=>toggleLicense(x)}>{x} ×</button>)}</div>}
-      <div className="count"><b>{results.length}</b>件の学部・学科・専攻 <button className={likedOnly?"favoriteToggle active":"favoriteToggle"} disabled={!liked.length} onClick={()=>{resetResults();setLikedOnly(value=>!value)}}>♡ 気になる {liked.length}件{liked.length>0&&<small>{likedOnly?"すべて表示":"だけ表示"}</small>}</button></div>
-      <div className="grid">{visibleResults.map(d=>{const key=schoolKey(d);const active=liked.includes(key);return <article className="card" key={key}><div className="cardHead"><div><span className={`kind ${d.kind}`}>{d.kind}</span><span className="pref">{d.prefecture}</span>{d.mode&&<span className="mode">{d.mode}</span>}</div><button aria-label={`${d.university}を気になるに追加`} className={active?"active":""} onClick={()=>toggleLiked(key,active)}>{active?"♥":"♡"}</button></div><h3>{d.university}</h3><p>{d.faculty}<br/><strong>{d.department}</strong>{d.major&&<><br/><span className="major">{d.major}</span></>}{d.course&&<><br/><span className="course">{d.course}</span></>}</p>{!isTeacherTraining(d)&&<i className="outside">教員養成系以外で取得可</i>}<div className="licenses">{d.licenses.map(x=><span title={d.licenseLevels?.[x]?.map(level=>`${level}種`).join("・")} className={selected.includes(x)?"hit":""} key={x}>{x}{d.licenseLevels?.[x]?.length&&<small>{d.licenseLevels[x].join("・")}種</small>}</span>)}</div>{d.note&&<p className="cardNote">※ {d.note}</p>}</article>})}</div>
+      <div className="resultBar">
+        <div className="count"><b>{results.length}</b>件の学部・学科・専攻</div>
+        <div className="resultActions">
+          <button className={likedOnly?"favoriteToggle active":"favoriteToggle"} disabled={!liked.length} onClick={()=>{resetResults();setLikedOnly(value=>!value)}}>♡ 気になる {liked.length}件{liked.length>0&&<small>{likedOnly?"すべて表示":"だけ表示"}</small>}</button>
+          <label><small>並べ替え</small><select value={sort} onChange={e=>setSort(e.target.value)}><option>大学名順</option><option>都道府県順</option><option>免許数が多い順</option><option>教員養成系を先に</option></select></label>
+          <button className="shareButton" onClick={copyShareUrl}>検索条件を共有</button>
+        </div>
+      </div>
+      {shareNotice&&<p className="shareNotice" role="status">{shareNotice}</p>}
+      <div className="grid">{visibleResults.map(d=>{
+        const key=schoolKey(d);
+        const active=liked.includes(key);
+        const comparing=compareKeys.includes(key);
+        return <article className="card" key={key}>
+          <div className="cardHead"><div><span className={`kind ${d.kind}`}>{d.kind}</span><span className="pref">{d.prefecture}</span>{d.mode&&<span className="mode">{d.mode}</span>}</div><button aria-label={`${d.university}を気になるに追加`} className={active?"active":""} onClick={()=>toggleLiked(key,active)}>{active?"♥":"♡"}</button></div>
+          <h3>{d.university}</h3><p>{d.faculty}<br/><strong>{d.department}</strong>{d.major&&<><br/><span className="major">{d.major}</span></>}{d.course&&<><br/><span className="course">{d.course}</span></>}</p>
+          {!isTeacherTraining(d)&&<i className="outside">教員養成系以外で取得可</i>}
+          <div className="licenses">{d.licenses.map(x=><span title={d.licenseLevels?.[x]?.map(level=>`${level}種`).join("・")} className={selected.includes(x)?"hit":""} key={x}>{x}{d.licenseLevels?.[x]?.length&&<small>{d.licenseLevels[x].join("・")}種</small>}</span>)}</div>
+          {d.note&&<p className="cardNote">※ {d.note}</p>}
+          <div className="cardActions"><button onClick={()=>setActiveSchool(d)}>詳しく見る</button><button className={comparing?"active":""} disabled={!comparing&&compareKeys.length>=3} onClick={()=>toggleCompare(key)}>{comparing?"比較から外す":"比較に追加"}</button><a href={universityOfficialSearchUrl(d.university)} target="_blank" rel="noreferrer">公式サイトを探す ↗</a></div>
+        </article>
+      })}</div>
       {visibleCount<results.length&&<div className="loadMore"><button onClick={()=>setVisibleCount(count=>count+24)}>さらに24件を見る</button><small>{visibleResults.length} / {results.length}件を表示中</small></div>}
       {!results.length&&<div className="empty"><p>{likedOnly?"気になる候補がありません。":"選択した免許をすべて取得できる候補がありません。「いずれか」に切り替えるか、条件を減らしてみてください。"}</p>{likedOnly&&<button onClick={()=>setLikedOnly(false)}>すべての候補を表示</button>}</div>}
-      <p className="dataNote">※ 文科省の課程認定一覧を検索用に再構成しています。「取得可能」は複数免許を4年間で同時取得できることを保証するものではありません。</p>
+      <p className="dataNote">※ 文科省の課程認定一覧（{DATA_REFERENCE_DATE}現在）を検索用に再構成しています。「取得可能」は複数免許を4年間で同時取得できることを保証するものではありません。サイト確認日：{SITE_CHECK_DATE}</p>
     </section>
+    {compareKeys.length>0&&<div className="compareDock"><div><b>{compareKeys.length}件を比較に追加</b><span>最大3件</span></div><div><button onClick={()=>setCompareKeys([])}>すべて解除</button><button className="primary" onClick={()=>setCompareOpen(true)}>比較を見る</button></div></div>}
     <section className="columns" id="columns">
       <div className="columnsHead"><div><p className="label">CAREER COLUMNS</p><h2>先生になる前に、知っておきたいこと。</h2><p>大学選びから教育実習、採用試験まで。迷いやすいテーマを短く整理しました。</p></div><div className="columnArrows"><button onClick={()=>columnTrack.current?.scrollBy({left:-330,behavior:"smooth"})} aria-label="前の記事">←</button><button onClick={()=>columnTrack.current?.scrollBy({left:330,behavior:"smooth"})} aria-label="次の記事">→</button></div></div>
       <div className="columnTrack" ref={columnTrack}>
@@ -227,6 +327,33 @@ export default function Home() {
         </article>)}
       </div>
     </section>
+    {activeSchool&&<div className="schoolOverlay" role="dialog" aria-modal="true" aria-label={`${activeSchool.university}の詳細`} onClick={()=>setActiveSchool(null)}>
+      <article className="schoolDetail" onClick={event=>event.stopPropagation()}>
+        <button className="schoolClose" onClick={()=>setActiveSchool(null)} aria-label="詳細を閉じる">×</button>
+        <p className="detailMeta"><span className={`kind ${activeSchool.kind}`}>{activeSchool.kind}</span> {activeSchool.prefecture}　{activeSchool.mode??"通学"}</p>
+        <h2>{activeSchool.university}</h2>
+        <h3>{activeSchool.faculty}　{activeSchool.department}</h3>
+        {(activeSchool.major||activeSchool.course)&&<p className="detailCourse">{activeSchool.major}{activeSchool.major&&activeSchool.course&&"　"}{activeSchool.course}</p>}
+        <dl className="detailFacts"><div><dt>教員養成系</dt><dd>{isTeacherTraining(activeSchool)?"教員養成系":"一般学部・学科から取得可能"}</dd></div><div><dt>取得できる免許</dt><dd>{activeSchool.licenses.map(license=><span key={license}>{license}{activeSchool.licenseLevels?.[license]?.length&&<small>{activeSchool.licenseLevels[license].join("・")}種</small>}</span>)}</dd></div><div><dt>情報の基準</dt><dd>文科省一覧：{DATA_REFERENCE_DATE}現在<br/>サイト確認日：{SITE_CHECK_DATE}</dd></div></dl>
+        {activeSchool.note&&<p className="detailNote">※ {activeSchool.note}</p>}
+        <p className="detailCaution">取得免許の組合せ、履修人数、時間割、教育実習の条件は大学の最新情報で確認してください。</p>
+        <div className="detailActions"><a href={universityOfficialSearchUrl(activeSchool.university)} target="_blank" rel="noreferrer">大学公式・教職課程を探す ↗</a><button disabled={!compareKeys.includes(schoolKey(activeSchool))&&compareKeys.length>=3} onClick={()=>toggleCompare(schoolKey(activeSchool))}>{compareKeys.includes(schoolKey(activeSchool))?"比較から外す":"比較に追加"}</button></div>
+      </article>
+    </div>}
+    {compareOpen&&<div className="schoolOverlay" role="dialog" aria-modal="true" aria-label="大学比較" onClick={()=>setCompareOpen(false)}>
+      <article className="comparePanel" onClick={event=>event.stopPropagation()}>
+        <button className="schoolClose" onClick={()=>setCompareOpen(false)} aria-label="比較を閉じる">×</button>
+        <p className="label">COMPARE</p><h2>選んだ課程を比較</h2>
+        <div className="compareGrid">{comparedSchools.map(school=><section key={schoolKey(school)}>
+          <button className="removeCompare" onClick={()=>toggleCompare(schoolKey(school))}>× 外す</button>
+          <span className={`kind ${school.kind}`}>{school.kind}</span><small>{school.prefecture}</small>
+          <h3>{school.university}</h3><p>{school.faculty}<br/><b>{school.department}</b></p>
+          <dl><div><dt>区分</dt><dd>{isTeacherTraining(school)?"教員養成系":"一般学部"}</dd></div><div><dt>免許数</dt><dd>{school.licenses.length}種類</dd></div><div><dt>取得免許</dt><dd>{school.licenses.join("／")}</dd></div></dl>
+          <a href={universityOfficialSearchUrl(school.university)} target="_blank" rel="noreferrer">公式サイトを探す ↗</a>
+        </section>)}</div>
+        <div className="compareFooter"><button onClick={()=>{setCompareKeys([]);setCompareOpen(false)}}>比較をすべて解除</button><button onClick={()=>setCompareOpen(false)}>大学を選び直す</button></div>
+      </article>
+    </div>}
     <section className="note"><div><p className="label">YOSHI&apos;S NOTE</p><h2>「取れる免許」と、<br/>「同時に取れる免許」を分けよう。</h2></div><p>一覧は教職課程認定上の取得可能免許を整理したものです。複数免許の同時取得には専攻・時間割・実習などの条件があるため、候補が決まったら大学へ確認しましょう。</p></section>
     <section className="series" id="series">
       <div className="seriesHead"><p className="label">YOSHI&apos;S GUIDE SERIES</p><h2>「偏差値だけではわからない」を、もっと見る。</h2><p>学部や進路ごとに、大学選びの見えにくい違いを整理しています。</p></div>
