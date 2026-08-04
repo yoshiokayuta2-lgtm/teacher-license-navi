@@ -5,6 +5,9 @@ import { NATIONAL_PUBLIC_DATA } from "./national-public-data";
 import { PRIVATE_DATA } from "./private-data";
 import type { School } from "./types";
 
+const MEDICAL_NAVI_URL = "https://yoshiokayuta2-lgtm.github.io/kokkoritsu-medical-navi/?utm_source=teacher-license-navi&utm_medium=referral&utm_campaign=yoshi_series";
+const INSTAGRAM_URL = "https://www.instagram.com/yoshi.daigaku_navi/";
+
 const FEATURED_DATA: School[] = [
   {prefecture:"北海道",kind:"国立",university:"北海道大学",faculty:"文学部",department:"人文科学科",licenses:["中学 国語","高校 国語","中学 社会","高校 地理歴史","高校 公民","中学 英語","高校 英語"]},
   {prefecture:"宮城",kind:"国立",university:"東北大学",faculty:"文学部",department:"人文社会学科",licenses:["中学 国語","高校 国語","中学 社会","高校 地理歴史","高校 公民","中学 英語","高校 英語"]},
@@ -373,7 +376,7 @@ export default function Home() {
     <section className="series" id="series">
       <div className="seriesHead"><p className="label">YOSHI&apos;S GUIDE SERIES</p><h2>「偏差値だけではわからない」を、もっと見る。</h2><p>学部や進路ごとに、大学選びの見えにくい違いを整理しています。</p></div>
       <div className="seriesCards">
-        <a className="seriesCard medical" href="https://yoshiokayuta2-lgtm.github.io/kokkoritsu-medical-navi/" onClick={()=>trackEvent("series_navigation",{destination:"kokkoritsu_medical_navi"})} aria-label="偏差値だけではわからない 国公立医学部編へ">
+        <a className="seriesCard medical" href={MEDICAL_NAVI_URL} onClick={()=>trackEvent("series_navigation",{destination:"kokkoritsu_medical_navi",placement:"series_card"})} aria-label="偏差値だけではわからない 国公立医学部編へ">
           <small>SERIES 01</small><div><span>国公立医学部編</span><b>医学部の違いは、<br/>偏差値だけじゃない。</b></div><strong>サイトを見る　→</strong>
         </a>
         <div className="seriesCard teacher current" aria-current="page">
@@ -381,6 +384,11 @@ export default function Home() {
         </div>
       </div>
     </section>
+    <aside className="instagramBanner" aria-label="Instagramのご案内">
+      <div className="instagramMark" aria-hidden="true">◎</div>
+      <div><small>INSTAGRAM</small><b>大学選びのヒントを発信中</b><p>@yoshi.daigaku_navi</p></div>
+      <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" onClick={()=>trackEvent("instagram_click",{placement:"footer_banner"})}>Instagramをフォロー ↗</a>
+    </aside>
     {activeColumn&&<div className="articleOverlay" role="dialog" aria-modal="true" aria-label={activeColumn.title} onClick={()=>setActiveColumn(null)}>
       <article className="articlePage" onClick={e=>e.stopPropagation()}>
         <button className="articleClose" onClick={()=>setActiveColumn(null)} aria-label="記事を閉じる">×</button>
